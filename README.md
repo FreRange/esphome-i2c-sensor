@@ -8,7 +8,7 @@ This is the [ESPHome](https://github.com/esphome/esphome) external component for
 external_components:
   - source:
       type: git
-      url: https://github.com/diptanw/esphome-i2c-sensor
+      url: https://github.com/FreRange/esphome-i2c-sensor
       ref: main
     components: [ chirp ]
 
