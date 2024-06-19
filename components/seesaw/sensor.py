@@ -21,11 +21,9 @@ DEPENDENCIES = ["i2c"]
 
 CONF_MIN_CAPACITY = "min_capacity"
 CONF_MAX_CAPACITY = "max_capacity"
-CONF_BRIGHTNESS_COEFFICIENT = "coefficient"
-CONF_BRIGHTNESS_CONSTANT = "constant"
 CONF_NEW_ADDRESS = "new_address"
 
-chirp_ns = cg.esphome_ns.namespace("chirp")
+chirp_ns = cg.esphome_ns.namespace("seesaw")
 chirpComponent = chirp_ns.class_(
     "I2CSoilMoistureComponent", cg.PollingComponent, i2c.I2CDevice
 )
@@ -58,32 +56,12 @@ MOISTURE_SCHEMA = (
     )
 )
 
-ILLUMINANCE_SCHEMA = (
-    sensor.sensor_schema(
-        unit_of_measurement=UNIT_LUX,
-        accuracy_decimals=1,
-        device_class=DEVICE_CLASS_ILLUMINANCE,
-        state_class=STATE_CLASS_MEASUREMENT,
-    )
-    .extend(
-        {
-            cv.Optional(CONF_CALIBRATION): cv.Schema(
-            {
-                cv.Optional(CONF_BRIGHTNESS_COEFFICIENT, default=-1.525): cv.float_,
-                cv.Optional(CONF_BRIGHTNESS_CONSTANT, default=100000): cv.uint32_t,
-                cv.Optional(CONF_RAW, default=False): cv.boolean,
-            }),
-        }
-    )
-)
-
 CONFIG_SCHEMA = (
     cv.Schema(
         {
             cv.GenerateID(): cv.declare_id(chirpComponent),
             cv.Optional(CONF_MOISTURE): MOISTURE_SCHEMA,
             cv.Optional(CONF_TEMPERATURE): TEMPERATURE_SCHEMA,
-            cv.Optional(CONF_ILLUMINANCE): ILLUMINANCE_SCHEMA,
             cv.Optional(CONF_NEW_ADDRESS): cv.i2c_address,
         }
     )
@@ -111,18 +89,5 @@ async def to_code(config):
         sens = await sensor.new_sensor(temperature_config)
         cg.add(var.set_temperature(sens))
 
-    if lum_config := config.get(CONF_ILLUMINANCE):
-        sens = await sensor.new_sensor(lum_config)
-        cg.add(var.set_light(sens))
-
-        if calibration := lum_config.get(CONF_CALIBRATION):
-            cg.add(var.calib_light(
-                calibration[CONF_BRIGHTNESS_COEFFICIENT],
-                calibration[CONF_BRIGHTNESS_CONSTANT],
-                calibration[CONF_RAW]),
-            )
-
     if address := config.get(CONF_NEW_ADDRESS):
         cg.add(var.set_address(address))
-
-
